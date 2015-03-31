@@ -24,7 +24,7 @@ View::View(): cameraLocation(4.0f, 3.0f, 3.0f), cameraDirection(0.0f, 0.0f, 1.0f
         return;
     }
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
@@ -144,7 +144,7 @@ void View::generateMapView(GameMap *map) {
 
     glGenBuffers(1, &floorVertices);
     glBindBuffer(GL_ARRAY_BUFFER, floorVertices);
-    glBufferData(GL_ARRAY_BUFFER, mapSize * 4 * sizeof(vec3), &vertices[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), &vertices[0], GL_STATIC_DRAW);
 
     glGenBuffers(1, &floorIndices);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, floorIndices);
