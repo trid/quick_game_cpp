@@ -2,8 +2,13 @@
 
 layout(location = 0) in vec3 in_vertexPosition;
 
+uniform mat4 u_rotation;
+uniform mat4 u_view;
+uniform mat4 u_translation;
+uniform mat4 u_camera;
+
 void main() {
-    gl_Position.xyz = in_vertexPosition * 0.1;
-    //gl_Position.z -= 10;
-    gl_Position.w = 1.0;
+    vec4 vertexPosition = vec4(in_vertexPosition, 1.0);
+
+    gl_Position = u_camera * vertexPosition;
 }

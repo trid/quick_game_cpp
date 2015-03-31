@@ -2,15 +2,10 @@
 // Created by TriD on 22.03.2015.
 //
 
-#define GLEW_STATIC
-
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
-
-#include "GL/glew.h"
-#include "glm/vec3.hpp"
 
 #include "View.h"
 #include "GameMap.h"
@@ -23,13 +18,13 @@ using std::vector;
 
 using glm::vec3;
 
-View::View() {
+View::View(): cameraLocation(4.0f, 3.0f, 3.0f), cameraDirection(0.0f, 0.0f, 1.0f) {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         cout << "Failed to init SDL" << endl;
         return;
     }
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
@@ -37,13 +32,6 @@ View::View() {
     window = SDL_CreateWindow("Test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
     if (window == nullptr) {
         cout << "Failed to create window" << endl;
-        SDL_Quit();
-        return;
-    }
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
-    if (renderer == nullptr) {
-        cout << "Failed to create renderer" << endl;
-        SDL_DestroyWindow(window);
         SDL_Quit();
         return;
     }
@@ -108,7 +96,7 @@ void View::loadShaders() {
     log = new char[infoLogLength];
     glGetShaderInfoLog(fragmentShaderId, infoLogLength, nullptr, log);
 
-    GLuint shaderProgram = glCreateProgram();
+    shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShaderId);
     glAttachShader(shaderProgram, fragmentShaderId);
 
@@ -121,7 +109,7 @@ void View::generateMapView(GameMap *map) {
     vector<vec3> vertices;
     GLuint *indices;
 
-    int mapSize = 0;
+    mapSize = 0;
 
     for (int i = 0; i < map->mapData.size(); i++) {
         for (int k = 0; k < map->mapData[i].size(); k++) {
@@ -150,6 +138,10 @@ void View::generateMapView(GameMap *map) {
         indices[i * 6 + 5] = i + 3;
     }
 
+    GLuint vertexArrayId;
+    glGenVertexArrays(1, &vertexArrayId);
+    glBindVertexArray(vertexArrayId);
+
     glGenBuffers(1, &floorVertices);
     glBindBuffer(GL_ARRAY_BUFFER, floorVertices);
     glBufferData(GL_ARRAY_BUFFER, mapSize * 4 * sizeof(vec3), &vertices[0], GL_STATIC_DRAW);
@@ -161,11 +153,27 @@ void View::generateMapView(GameMap *map) {
 }
 
 void View::draw() {
+    /*glm::vec3 translationVector(-5.0f, 0.0f, 0.0f);
+    glm::vec3 rotationVector(1.0f, 0.0f, 0.0f);
+    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), translationVector);
+    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), -glm::pi<float>()/2, rotationVector);*/
+    glm::mat4 cameraMatrix = glm::lookAt(cameraLocation, cameraDirection, vec3(0.0f, 1.0f, 0.0f));
+
+
+    /*GLint rotationLocation = glGetUniformLocation(shaderProgram, "u_rotation");
+    glUniformMatrix4fv(rotationLocation, 1, GL_FALSE, (GLfloat const *) &rotationMatrix);
+    GLint translationLocation = glGetUniformLocation(shaderProgram, "u_translation");
+    glUniformMatrix4fv(translationLocation, 1, GL_FALSE, (GLfloat const *) &translationMatrix);*/
+    GLint cameraLocation = glGetUniformLocation(shaderProgram, "u_camera");
+    glUniformMatrix4fv(cameraLocation, 1, GL_FALSE, (GLfloat const *) &cameraMatrix);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, floorVertices);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, floorIndices);
 
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), 0);
+
+    glDrawElements(GL_TRIANGLES, mapSize * 6, GL_UNSIGNED_INT, 0);
     SDL_GL_SwapWindow(window);
 }
